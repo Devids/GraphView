@@ -151,7 +151,7 @@ abstract public class GraphView extends LinearLayout {
 			paint.setStrokeCap(Paint.Cap.ROUND);
 
 			for (int i=0; i<graphSeries.size(); i++) {
-				drawSeries(canvas, _values(i), graphwidth, graphheight, border, minX, minY, diffX, diffY, horstart, graphSeries.get(i).style, i, graphSeries.size());
+				drawSeries(canvas, _values(i), graphwidth, graphheight, border, minX, minY, diffX, diffY, horstart, graphSeries.get(i).style, i);
 			}
 
 			if (showLegend) drawLegend(canvas, height, width);
@@ -427,7 +427,7 @@ abstract public class GraphView extends LinearLayout {
 		}
 	}
 
-	abstract public void drawSeries(Canvas canvas, GraphViewDataInterface[] values, float graphwidth, float graphheight, float border, double minX, double minY, double diffX, double diffY, float horstart, GraphViewSeriesStyle style, int serieNum, int seriesCount);
+	abstract public void drawSeries(Canvas canvas, GraphViewDataInterface[] values, float graphwidth, float graphheight, float border, double minX, double minY, double diffX, double diffY, float horstart, GraphViewSeriesStyle style, int serieNum);
 
 	/**
 	 * formats the label
@@ -812,5 +812,9 @@ abstract public class GraphView extends LinearLayout {
 	public void setViewPort(double start, double size) {
 		viewportStart = start;
 		viewportSize = size;
+	}
+	
+	protected int getSeriesCount(){
+		return graphSeries.size();
 	}
 }
