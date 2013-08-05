@@ -1,5 +1,5 @@
 /**
- * This file is part of GraphView.
+f * This file is part of GraphView.
  *
  * GraphView is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -151,7 +151,7 @@ abstract public class GraphView extends LinearLayout {
 			paint.setStrokeCap(Paint.Cap.ROUND);
 
 			for (int i=0; i<graphSeries.size(); i++) {
-				drawSeries(canvas, _values(i), graphwidth, graphheight, border, minX, minY, diffX, diffY, horstart, graphSeries.get(i).style);
+				drawSeries(canvas, _values(i), graphwidth, graphheight, border, minX, minY, diffX, diffY, horstart, graphSeries.get(i).style, i, graphSeries.size());
 			}
 
 			if (showLegend) drawLegend(canvas, height, width);
@@ -272,10 +272,10 @@ abstract public class GraphView extends LinearLayout {
 			}
 			if (getGraphViewStyle().getVerticalLabelsWidth()==0 && getLayoutParams().width != textWidth+GraphViewConfig.BORDER) {
 				setLayoutParams(new LayoutParams(
-						(int) (textWidth+GraphViewConfig.BORDER), LayoutParams.FILL_PARENT));
+						(int) (textWidth+GraphViewConfig.BORDER), LayoutParams.MATCH_PARENT));
 			} else if (getGraphViewStyle().getVerticalLabelsWidth()!=0 && getGraphViewStyle().getVerticalLabelsWidth() != getLayoutParams().width) {
 				setLayoutParams(new LayoutParams(
-						getGraphViewStyle().getVerticalLabelsWidth(), LayoutParams.FILL_PARENT));
+						getGraphViewStyle().getVerticalLabelsWidth(), LayoutParams.MATCH_PARENT));
 			}
 
 			float border = GraphViewConfig.BORDER;
@@ -427,7 +427,7 @@ abstract public class GraphView extends LinearLayout {
 		}
 	}
 
-	abstract public void drawSeries(Canvas canvas, GraphViewDataInterface[] values, float graphwidth, float graphheight, float border, double minX, double minY, double diffX, double diffY, float horstart, GraphViewSeriesStyle style);
+	abstract public void drawSeries(Canvas canvas, GraphViewDataInterface[] values, float graphwidth, float graphheight, float border, double minX, double minY, double diffX, double diffY, float horstart, GraphViewSeriesStyle style, int serieNum, int seriesCount);
 
 	/**
 	 * formats the label

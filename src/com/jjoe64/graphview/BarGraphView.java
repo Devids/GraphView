@@ -41,8 +41,9 @@ public class BarGraphView extends GraphView {
 	@Override
 	public void drawSeries(Canvas canvas, GraphViewDataInterface[] values, float graphwidth, float graphheight,
 			float border, double minX, double minY, double diffX, double diffY,
-			float horstart, GraphViewSeriesStyle style) {
-		float colwidth = (graphwidth - (2 * border)) / values.length;
+			float horstart, GraphViewSeriesStyle style, int serieNum, int seriesCount) {
+		//float colwidth = (graphwidth - (2 * border)) / values.length / seriesCount;
+		float colwidth = (graphwidth) / values.length / seriesCount;
 
 		paint.setStrokeWidth(style.thickness);
 		paint.setColor(style.color);
@@ -58,7 +59,7 @@ public class BarGraphView extends GraphView {
 				paint.setColor(style.getValueDependentColor().get(values[i]));
 			}
 
-			canvas.drawRect((i * colwidth) + horstart, (border - y) + graphheight, ((i * colwidth) + horstart) + (colwidth - 1), graphheight + border - 1, paint);
+			canvas.drawRect((i * seriesCount * colwidth) + horstart + (colwidth * serieNum), (border - y) + graphheight, ((i * seriesCount * colwidth) + horstart) + (colwidth - 1) + (colwidth * serieNum), graphheight + border - 1, paint);
 		}
 	}
 }
