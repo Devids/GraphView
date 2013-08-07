@@ -65,7 +65,7 @@ abstract public class GraphView extends LinearLayout {
 		 */
 		public GraphViewContentView(Context context) {
 			super(context);
-			setLayoutParams(new LayoutParams(LayoutParams.FILL_PARENT, LayoutParams.FILL_PARENT));
+			setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
 		}
 
 		/**
@@ -163,6 +163,7 @@ abstract public class GraphView extends LinearLayout {
 			// view port update
 			if (viewportSize != 0) {
 				viewportStart -= f*viewportSize/graphwidth;
+				Log.d("graphView", f+" viewPortStart on move: "+viewportStart);
 
 				// minimal and maximal view limit
 				double minX = getMinX(true);
@@ -336,6 +337,8 @@ abstract public class GraphView extends LinearLayout {
 	private final Rect textBounds = new Rect();
 	private boolean staticHorizontalLabels;
 	private boolean staticVerticalLabels;
+	private double minx = 0.0;
+	private double maxx = 0.0;
 
 	public GraphView(Context context, AttributeSet attrs) {
 		this(context, attrs.getAttributeValue(null, "title"));
@@ -366,7 +369,7 @@ abstract public class GraphView extends LinearLayout {
 		viewVerLabels = new VerLabelsView(context);
 		addView(viewVerLabels);
 		graphViewContentView = new GraphViewContentView(context);
-		addView(graphViewContentView, new LayoutParams(LayoutParams.FILL_PARENT, LayoutParams.FILL_PARENT, 1));
+		addView(graphViewContentView, new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT, 1));
 	}
 
 	private GraphViewDataInterface[] _values(int idxSeries) {
@@ -560,7 +563,7 @@ abstract public class GraphView extends LinearLayout {
 	protected double getMaxX(boolean ignoreViewport) {
 		// if viewport is set, use this
 		if (!ignoreViewport && viewportSize != 0) {
-			return viewportStart+viewportSize;
+			return viewportStart+viewportSize+minx;
 		} else {
 			// otherwise use the max x value
 			// values must be sorted by x, so the last value has the largest X value
@@ -614,7 +617,7 @@ abstract public class GraphView extends LinearLayout {
 	protected double getMinX(boolean ignoreViewport) {
 		// if viewport is set, use this
 		if (!ignoreViewport && viewportSize != 0) {
-			return viewportStart;
+			return viewportStart + minx;
 		} else {
 			// otherwise use the min x value
 			// values must be sorted by x, so the first value has the smallest X value
@@ -886,5 +889,32 @@ abstract public class GraphView extends LinearLayout {
 	
 	protected int getSeriesCount(){
 		return graphSeries.size();
+	}
+	
+	public void setMinX(double minx){
+		this.minx = minx;
+	}
+	
+	public void seekBarMove(int i){
+		// view port update
+		if (viewportSize != 0) {
+			viewportStart -= ((double)i)*0.594*viewportSize/graphViewContentView.graphwidth;
+			Log.d("graphView", i+" viewPortStart: "+viewportStart);
+
+			// minimal and maximal view limit
+			double minX = getMinX(true);
+			double maxX = getMaxX(true);
+			if (viewportStart < minX) {
+				viewportStart = minX;
+			} else if (viewportStart+viewportSize > maxX) {
+				viewportStart = maxX - viewportSize;
+			}
+
+			// labels have to be regenerated
+			if (!staticHorizontalLabels) horlabels = null;
+			if (!staticVerticalLabels) verlabels = null;
+			viewVerLabels.invalidate();
+		}
+		graphViewContentView.invalidate();
 	}
 }
