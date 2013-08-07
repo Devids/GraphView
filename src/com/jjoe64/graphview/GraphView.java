@@ -31,6 +31,7 @@ import android.graphics.Paint.Align;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.LinearLayout;
@@ -57,6 +58,7 @@ abstract public class GraphView extends LinearLayout {
 	private class GraphViewContentView extends View {
 		private float lastTouchEventX;
 		private float graphwidth;
+		private boolean scrollingStarted;
 
 		/**
 		 * @param context
@@ -195,23 +197,32 @@ abstract public class GraphView extends LinearLayout {
 				handled = scaleDetector.isInProgress();
 			}
 			if (!handled) {
+				Log.d("GraphView", "on touch event scale not handled+"+lastTouchEventX);
 				// if not scaled, scroll
 				if ((event.getAction() & MotionEvent.ACTION_DOWN) == MotionEvent.ACTION_DOWN) {
+					scrollingStarted = true;
 					handled = true;
 				}
 				if ((event.getAction() & MotionEvent.ACTION_UP) == MotionEvent.ACTION_UP) {
+					scrollingStarted = false;
 					lastTouchEventX = 0;
 					handled = true;
 				}
 				if ((event.getAction() & MotionEvent.ACTION_MOVE) == MotionEvent.ACTION_MOVE) {
-					if (lastTouchEventX != 0) {
-						onMoveGesture(event.getX() - lastTouchEventX);
+					if (scrollingStarted) {
+						if (lastTouchEventX != 0) {
+							onMoveGesture(event.getX() - lastTouchEventX);
+						}
+						lastTouchEventX = event.getX();
+						handled = true;
 					}
-					lastTouchEventX = event.getX();
-					handled = true;
 				}
 				if (handled)
 					invalidate();
+			} else {
+				// currently scaling
+				scrollingStarted = false;
+				lastTouchEventX = 0;
 			}
 			return handled;
 		}
@@ -335,7 +346,6 @@ abstract public class GraphView extends LinearLayout {
 	}
 
 	/**
-	 *
 	 * @param context
 	 * @param title [optional]
 	 */
@@ -388,6 +398,10 @@ abstract public class GraphView extends LinearLayout {
 		}
 	}
 
+	/**
+	 * add a series of data to the graph
+	 * @param series
+	 */
 	public void addSeries(GraphViewSeries series) {
 		series.addGraphView(this);
 		graphSeries.add(series);
@@ -431,11 +445,14 @@ abstract public class GraphView extends LinearLayout {
 
 	/**
 	 * formats the label
-	 * can be overwritten
+	 * use #setCustomLabelFormatter or static labels if you want custom labels
+	 * 
 	 * @param value x and y values
 	 * @param isValueX if false, value y wants to be formatted
+	 * @deprecated use {@link #setCustomLabelFormatter(CustomLabelFormatter)}
 	 * @return value to display
 	 */
+	@Deprecated
 	protected String formatLabel(double value, boolean isValueX) {
 		if (customLabelFormatter != null) {
 			String label = customLabelFormatter.formatLabel(value, isValueX);
@@ -504,18 +521,31 @@ abstract public class GraphView extends LinearLayout {
 		return labels;
 	}
 
+	/**
+	 * @return the custom label formatter, if there is one. otherwise null
+	 */
 	public CustomLabelFormatter getCustomLabelFormatter() {
 		return customLabelFormatter;
 	}
 
+	/**
+	 * @return the graphview style. it will never be null.
+	 */
 	public GraphViewStyle getGraphViewStyle() {
 		return graphViewStyle;
 	}
 
+	/**
+	 * get the position of the legend
+	 * @return
+	 */
 	public LegendAlign getLegendAlign() {
 		return legendAlign;
 	}
 
+	/**
+	 * @return legend width
+	 */
 	public float getLegendWidth() {
 		return legendWidth;
 	}
@@ -640,6 +670,10 @@ abstract public class GraphView extends LinearLayout {
 		return showLegend;
 	}
 
+	/**
+	 * forces graphview to invalide all views and caches.
+	 * Normally there is no need to call this manually.
+	 */
 	public void redrawAll() {
 		if (!staticVerticalLabels) verlabels = null;
 		if (!staticHorizontalLabels) horlabels = null;
@@ -653,6 +687,9 @@ abstract public class GraphView extends LinearLayout {
 		graphViewContentView.invalidate();
 	}
 
+	/**
+	 * removes all series
+	 */
 	public void removeAllSeries() {
 		for (GraphViewSeries s : graphSeries) {
 			s.removeGraphView(this);
@@ -663,12 +700,20 @@ abstract public class GraphView extends LinearLayout {
 		redrawAll();
 	}
 
+	/**
+	 * removes a series
+	 * @param series series to remove
+	 */
 	public void removeSeries(GraphViewSeries series) {
 		series.removeGraphView(this);
 		graphSeries.remove(series);
 		redrawAll();
 	}
 
+	/**
+	 * removes series
+	 * @param index 
+	 */
 	public void removeSeries(int index) {
 		if (index < 0 || index >= graphSeries.size()) {
 			throw new IndexOutOfBoundsException("No series at index " + index);
@@ -677,6 +722,10 @@ abstract public class GraphView extends LinearLayout {
 		removeSeries(graphSeries.get(index));
 	}
 
+	/**
+	 * scrolls to the last x-value
+	 * @throws IllegalStateException if scrollable == false
+	 */
 	public void scrollToEnd() {
 		if (!scrollable) throw new IllegalStateException("This GraphView is not scrollable.");
 		double max = getMaxX(true);
@@ -684,6 +733,10 @@ abstract public class GraphView extends LinearLayout {
 		redrawAll();
 	}
 
+	/**
+	 * set a custom label formatter
+	 * @param customLabelFormatter
+	 */
 	public void setCustomLabelFormatter(CustomLabelFormatter customLabelFormatter) {
 		this.customLabelFormatter = customLabelFormatter;
 	}
@@ -696,6 +749,10 @@ abstract public class GraphView extends LinearLayout {
 		this.disableTouch = disableTouch;
 	}
 
+	/**
+	 * set custom graphview style
+	 * @param style
+	 */
 	public void setGraphViewStyle(GraphViewStyle style) {
 		graphViewStyle = style;
 		textHeight = null;
@@ -710,10 +767,18 @@ abstract public class GraphView extends LinearLayout {
 		this.horlabels = horlabels;
 	}
 
+	/**
+	 * legend position
+	 * @param legendAlign
+	 */
 	public void setLegendAlign(LegendAlign legendAlign) {
 		this.legendAlign = legendAlign;
 	}
 
+	/**
+	 * legend width
+	 * @param legendWidth
+	 */
 	public void setLegendWidth(float legendWidth) {
 		this.legendWidth = legendWidth;
 	}
@@ -791,6 +856,10 @@ abstract public class GraphView extends LinearLayout {
 		this.showLegend = showLegend;
 	}
 
+	/**
+	 * sets the title of graphview
+	 * @param title
+	 */
 	public void setTitle(String title) {
 		this.title = title;
 	}
@@ -806,6 +875,7 @@ abstract public class GraphView extends LinearLayout {
 
 	/**
 	 * set's the viewport for the graph.
+	 * @see #setManualYAxisBounds(double, double) to limit the y-viewport
 	 * @param start x-value
 	 * @param size
 	 */
