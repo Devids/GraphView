@@ -19,17 +19,22 @@ f * This file is part of GraphView.
 
 package com.jjoe64.graphview;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Paint.Align;
 import android.graphics.Rect;
 import android.graphics.RectF;
+import android.os.Environment;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.MotionEvent;
@@ -916,5 +921,30 @@ abstract public class GraphView extends LinearLayout {
 			viewVerLabels.invalidate();
 		}
 		graphViewContentView.invalidate();
+	}
+	
+	public void saveCanvasAsImage(){
+		Bitmap  bitmap = Bitmap.createBitmap( this.getWidth(), this.getHeight(), Bitmap.Config.ARGB_8888);
+		Canvas canvas = new Canvas(bitmap);
+		this.draw(canvas); 
+		
+	    String root = Environment.getExternalStorageDirectory().toString();
+	    File myDir = new File(root + "/measuready_images");    
+	    myDir.mkdirs();
+	    Random generator = new Random();
+	    int n = 10000;
+	    n = generator.nextInt(n);
+	    String fname = "Graph-"+ n +".jpg";
+	    File file = new File (myDir, fname);
+	    if (file.exists ()) file.delete (); 
+	    try {
+	           FileOutputStream out = new FileOutputStream(file);
+	           bitmap.compress(Bitmap.CompressFormat.JPEG, 90, out);
+	           out.flush();
+	           out.close();
+
+	    } catch (Exception e) {
+	           e.printStackTrace();
+	    } 
 	}
 }
